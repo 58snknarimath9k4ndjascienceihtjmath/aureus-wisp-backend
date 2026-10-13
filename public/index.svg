@@ -1,44 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style="display:block">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml" width="100%" height="100%" style="display:block;position:fixed;inset:0;background:#090909">
   <foreignObject x="0" y="0" width="100%" height="100%">
-    <div xmlns="http://www.w3.org/1999/xhtml" id="appHost" style="width:100%;height:100%;overflow:auto;background:#090909;color:white;font:14px system-ui,sans-serif">Loading Aureus…</div>
+    <xhtml:iframe src="./index.html" title="Aureus Browser" style="display:block;width:100%;height:100%;border:0;background:#090909"></xhtml:iframe>
   </foreignObject>
-  <script><![CDATA[
-  (async () => {
-    const host = document.getElementById("appHost");
-    const rootPath = new URL("./", location.href).pathname;
-    const resolveAsset = (value) => value.startsWith("/") ? rootPath + value.slice(1) : value;
-    try {
-      const response = await fetch(new URL("./index.html", location.href), { cache: "no-store" });
-      if (!response.ok) throw new Error(`Could not load index.html (${response.status})`);
-      const source = await response.text();
-      const page = new DOMParser().parseFromString(source, "text/html");
-      host.innerHTML = page.body.innerHTML;
-      for (const element of host.querySelectorAll("[src], [href]")) {
-        for (const attribute of ["src", "href"]) {
-          const value = element.getAttribute(attribute);
-          if (value?.startsWith("/")) element.setAttribute(attribute, resolveAsset(value));
-        }
-      }
-      for (const link of page.head.querySelectorAll('link[rel="stylesheet"]')) {
-        const copy = document.createElementNS("http://www.w3.org/1999/xhtml", "link");
-        copy.rel = "stylesheet";
-        copy.href = resolveAsset(link.getAttribute("href"));
-        host.prepend(copy);
-      }
-      const scripts = [...page.querySelectorAll("script[src]")];
-      for (const original of scripts) {
-        const script = document.createElementNS("http://www.w3.org/1999/xhtml", "script");
-        if (original.type) script.type = original.type;
-        script.src = resolveAsset(original.getAttribute("src"));
-        await new Promise((resolve, reject) => {
-          script.onload = resolve;
-          script.onerror = () => reject(new Error(`Could not load ${script.src}`));
-          host.append(script);
-        });
-      }
-    } catch (error) {
-      host.textContent = `Aureus could not start: ${error.message}`;
-    }
-  })();
-  ]]></script>
 </svg>
