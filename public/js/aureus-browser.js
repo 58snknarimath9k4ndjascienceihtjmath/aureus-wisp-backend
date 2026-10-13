@@ -12,6 +12,7 @@ let restoringTabs = true;
 const HISTORY_KEY = "aureus.history.v1";
 const ENGINE_KEY = "aureus.search-engine.v1";
 const SESSION_KEY = "aureus.session.v1";
+const CDN_HTML_KEY = "aureus.cdn-html-url.v1";
 const engines = [
   { id: "duckduckgo", name: "DuckDuckGo", template: "https://duckduckgo.com/?q={query}", domain: "duckduckgo.com" },
   { id: "google", name: "Google", template: "https://www.google.com/search?q={query}", domain: "google.com" },
@@ -260,9 +261,64 @@ const proxyReady = (async () => {
   }
 
   const connection = new BareMuxConnection("/baremux/worker.js");
-  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-  await connection.setTransport("/epoxy/index.mjs", [{ wisp: `${protocol}//${location.host}/wisp/` }]);
+  // The WISP backend is deployed separately from this frontend.
+  // Railway provides HTTPS, so its WebSocket endpoint uses WSS.
+  const wispUrl = "wss://aureus-wisp-backend-production.up.railway.app/wisp/";
+  await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
 })();
+
+function makeBlankPlayer(popup) {
+  const doc = popup.document;
+  doc.open();
+  doc.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Loading page…</title><style>*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#050506;color:#f5f5f7;font:14px/1.4 system-ui,sans-serif}#cdnFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#050506}#status{position:fixed;z-index:2;inset:0;display:grid;place-items:center;padding:24px;background:#050506;text-align:center}#status[hidden]{display:none}#status span{max-width:360px;padding:15px 18px;border:1px solid #3a3a40;border-radius:12px;background:#151518;color:#dedee4}#controls{position:fixed;z-index:3;top:12px;right:12px;display:flex;gap:7px;opacity:.28;transition:opacity .16s}#controls:hover,#controls:focus-within{opacity:1}#controls button{height:34px;padding:0 12px;border:1px solid #49494f;border-radius:8px;background:#17171be8;color:#f5f5f7;font:inherit;cursor:pointer;backdrop-filter:blur(10px)}#controls button:hover{background:#303036}</style></head><body><iframe id="cdnFrame" title="Fullscreen page" allow="fullscreen; autoplay; clipboard-read; clipboard-write; encrypted-media; gamepad; pointer-lock" allowfullscreen referrerpolicy="no-referrer"></iframe><div id="status"><span>Connecting through the Aureus proxy…</span></div><div id="controls"><button id="full" type="button">Fullscreen</button><button id="close" type="button">Close</button></div></body></html>`);
+  doc.close();
+  popup.opener = null;
+  const frame = doc.querySelector("#cdnFrame");
+  const status = doc.querySelector("#status");
+  doc.querySelector("#full").addEventListener("click", () => {
+    frame.requestFullscreen().catch(() => { status.hidden = false; status.querySelector("span").textContent = "Fullscreen was blocked by the browser. Use its fullscreen control instead."; });
+  });
+  doc.querySelector("#close").addEventListener("click", () => popup.close());
+  return { frame, status };
+}
+
+function proxyDestination(raw) {
+  const value = raw.trim();
+  let enteredUrl;
+  try {
+    enteredUrl = new URL(value);
+  } catch {
+    const normalized = normalizeAddress(value);
+    if (!normalized) throw new Error("Enter a web address first.");
+    enteredUrl = new URL(normalized);
+  }
+  if (enteredUrl.protocol !== "http:" && enteredUrl.protocol !== "https:") throw new Error("Enter an HTTP or HTTPS web address.");
+  const prefix = window.__uv$config.prefix;
+  if (enteredUrl.origin === location.origin && enteredUrl.pathname.startsWith(prefix)) return enteredUrl.href;
+  return `${prefix}${window.__uv$config.encodeUrl(enteredUrl.href)}`;
+}
+
+function openJsdelivrHtml() {
+  const popup = window.open("about:blank", "_blank");
+  if (!popup) { showNotice("Allow pop-ups for Aureus to open the fullscreen player."); return; }
+  const player = makeBlankPlayer(popup);
+  const typed = address.value.trim();
+  const saved = readStorage(CDN_HTML_KEY, "");
+  const entered = typed || saved || window.prompt("Paste a page URL, jsDelivr HTML link, or Aureus proxy link.");
+  if (!entered) { popup.close(); return; }
+  writeStorage(CDN_HTML_KEY, entered.trim());
+  try {
+    const destination = proxyDestination(entered);
+    player.frame.addEventListener("load", () => { player.status.hidden = true; }, { once: true });
+    void proxyReady.then(() => {
+      if (!popup.closed) player.frame.src = destination;
+    }).catch((error) => {
+      if (!popup.closed) player.status.querySelector("span").textContent = `Aureus proxy could not start: ${error.message}`;
+    });
+  } catch (error) {
+    player.status.querySelector("span").textContent = error.message;
+  }
+}
 
 async function navigate(raw, { recordHistory = true, preserveTitle = false } = {}) {
   const url = normalizeAddress(raw);
@@ -385,6 +441,8 @@ $("#reloadBtn").addEventListener("click", () => {
   const tab = activeTab();
   if (tab?.url && tab.iframe) { tab.loading = true; loading.classList.add("active"); tab.iframe.src = tab.iframe.src; }
 });
+$("#renderHtmlBtn").addEventListener("click", openJsdelivrHtml);
+$("#cdnHtmlLaunch").addEventListener("click", openJsdelivrHtml);
 $("#newTab").addEventListener("click", () => createTab());
 $("#fullscreenBtn").addEventListener("click", async () => {
   const tab = activeTab();

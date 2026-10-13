@@ -60,13 +60,14 @@ button,input{font:inherit;color:inherit}button{border:0;cursor:pointer}
 kbd{flex:none;padding:4px 7px;border:1px solid #3a3a40;border-radius:5px;color:#92929b;font-family:inherit;font-size:10px;line-height:1.2;letter-spacing:.06em}
 .quick-heading{display:flex;align-items:center;gap:12px;margin:26px 0 12px;color:#aaaab1;text-align:left;font-size:11px;font-weight:650;letter-spacing:.12em;text-transform:uppercase}
 .quick-rule{height:1px;flex:1;background:linear-gradient(90deg,#37373c,transparent)}
-.quick-launch{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.quick-launch{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px}
 .quick-app{min-width:0;min-height:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:9px 5px;border:1px solid #34343a;border-radius:12px;background:rgba(20,20,24,.88);color:#e8e8eb;font-size:11px;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s;animation:card-in .45s both;animation-delay:calc(var(--i,0)*28ms)}
 .quick-app:hover{transform:translateY(-3px);border-color:#696970;background:#202025;box-shadow:0 8px 18px #0005}
 .quick-app:active{transform:translateY(-1px) scale(.98)}
 .app-icon{width:31px;height:31px;display:grid;place-items:center;border-radius:9px;background:#25252b;color:#fff;transition:transform .18s}
 .quick-app:hover .app-icon{transform:scale(1.08)}
 .app-icon img{width:19px;height:19px;object-fit:contain;filter:brightness(0) invert(1)}
+.app-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .quick-app[data-brand="snapchat"] .app-icon{background:#ffeb00}.quick-app[data-brand="snapchat"] img{filter:none}
 .quick-app[data-brand="google"] .app-icon,.quick-app[data-brand="googleclassroom"] .app-icon{background:#f3f3f3}.quick-app[data-brand="google"] img,.quick-app[data-brand="googleclassroom"] img{filter:none}
 .quick-app[data-brand="instagram"] .app-icon{background:linear-gradient(35deg,#ff9a00,#e1306c,#833ab4)}
