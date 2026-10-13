@@ -1,0 +1,7 @@
+node_modules/
+.npm-cache/
+.env
+.env.*
+public/scramjet/
+public/controller/
+public/libcurl/

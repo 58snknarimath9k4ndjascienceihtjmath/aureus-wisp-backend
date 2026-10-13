@@ -1,0 +1,25 @@
+{
+  "name": "aureus-browser",
+  "version": "0.6.0",
+  "description": "A minimal browser-style web app powered by Ultraviolet.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "build": "node scripts/build-uv.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@mercuryworkshop/bare-mux": "^2.0.3",
+    "@mercuryworkshop/epoxy-tls": "^2.1.19-1",
+    "@mercuryworkshop/epoxy-transport": "^2.1.3",
+    "@mercuryworkshop/wisp-js": "^0.4.1",
+    "@titaniumnetwork-dev/ultraviolet": "^3.2.7",
+    "compression": "^1.8.1",
+    "express": "^4.21.2"
+  },
+  "license": "AGPL-3.0-or-later"
+}
