@@ -12,7 +12,7 @@ let restoringTabs = true;
 const HISTORY_KEY = "aureus.history.v1";
 const ENGINE_KEY = "aureus.search-engine.v1";
 const SESSION_KEY = "aureus.session.v1";
-const CDN_HTML_KEY = "aureus.cdn-html-url.v1";
+const AUREUS_CDN_URL = "https://quantil.jsdelivr.net/gh/58snknarimath9k4ndjascienceihtjmath/aureus-wisp-backend@main/public/index.html";
 const engines = [
   { id: "duckduckgo", name: "DuckDuckGo", template: "https://duckduckgo.com/?q={query}", domain: "duckduckgo.com" },
   { id: "google", name: "Google", template: "https://www.google.com/search?q={query}", domain: "google.com" },
@@ -282,41 +282,36 @@ function makeBlankPlayer(popup) {
   return { frame, status };
 }
 
-function proxyDestination(raw) {
-  const value = raw.trim();
-  let enteredUrl;
-  try {
-    enteredUrl = new URL(value);
-  } catch {
-    const normalized = normalizeAddress(value);
-    if (!normalized) throw new Error("Enter a web address first.");
-    enteredUrl = new URL(normalized);
-  }
-  if (enteredUrl.protocol !== "http:" && enteredUrl.protocol !== "https:") throw new Error("Enter an HTTP or HTTPS web address.");
-  const prefix = window.__uv$config.prefix;
-  if (enteredUrl.origin === location.origin && enteredUrl.pathname.startsWith(prefix)) return enteredUrl.href;
-  return `${prefix}${window.__uv$config.encodeUrl(enteredUrl.href)}`;
+function withAureusAssetBase(source) {
+  const base = `<base href="${location.origin}/">`;
+  const withoutBase = source.replace(/<base\b[^>]*>/ig, "");
+  if (/<head\b[^>]*>/i.test(withoutBase)) return withoutBase.replace(/<head\b[^>]*>/i, (head) => `${head}${base}`);
+  if (/<html\b[^>]*>/i.test(withoutBase)) return withoutBase.replace(/<html\b[^>]*>/i, (html) => `${html}<head>${base}</head>`);
+  return `<!doctype html><html><head>${base}</head><body>${withoutBase}</body></html>`;
 }
 
-function openJsdelivrHtml() {
+async function openAureusCdnSite() {
   const popup = window.open("about:blank", "_blank");
   if (!popup) { showNotice("Allow pop-ups for Aureus to open the fullscreen player."); return; }
   const player = makeBlankPlayer(popup);
-  const typed = address.value.trim();
-  const saved = readStorage(CDN_HTML_KEY, "");
-  const entered = typed || saved || window.prompt("Paste a page URL, jsDelivr HTML link, or Aureus proxy link.");
-  if (!entered) { popup.close(); return; }
-  writeStorage(CDN_HTML_KEY, entered.trim());
+  player.status.querySelector("span").textContent = "Loading Aureus from jsDelivr…";
   try {
-    const destination = proxyDestination(entered);
+    const response = await fetch(AUREUS_CDN_URL, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store" });
+    if (!response.ok) throw new Error(`jsDelivr returned HTTP ${response.status}.`);
+    const source = await response.text();
+    if (!/<(?:!doctype\s+html|html|head|body)\b/i.test(source)) throw new Error("The CDN response did not contain an HTML page.");
+    if (popup.closed) return;
+
+    const parsed = new DOMParser().parseFromString(source, "text/html");
+    if (parsed.title) popup.document.title = parsed.title.slice(0, 100);
+    player.status.querySelector("span").textContent = "Aureus is ready.";
     player.frame.addEventListener("load", () => { player.status.hidden = true; }, { once: true });
-    void proxyReady.then(() => {
-      if (!popup.closed) player.frame.src = destination;
-    }).catch((error) => {
-      if (!popup.closed) player.status.querySelector("span").textContent = `Aureus proxy could not start: ${error.message}`;
-    });
+    player.frame.srcdoc = withAureusAssetBase(source);
   } catch (error) {
-    player.status.querySelector("span").textContent = error.message;
+    if (!popup.closed) {
+      player.status.hidden = false;
+      player.status.querySelector("span").textContent = `Could not load Aureus from jsDelivr: ${error.message}`;
+    }
   }
 }
 
@@ -441,8 +436,8 @@ $("#reloadBtn").addEventListener("click", () => {
   const tab = activeTab();
   if (tab?.url && tab.iframe) { tab.loading = true; loading.classList.add("active"); tab.iframe.src = tab.iframe.src; }
 });
-$("#renderHtmlBtn").addEventListener("click", openJsdelivrHtml);
-$("#cdnHtmlLaunch").addEventListener("click", openJsdelivrHtml);
+$("#renderHtmlBtn").addEventListener("click", openAureusCdnSite);
+$("#cdnHtmlLaunch").addEventListener("click", openAureusCdnSite);
 $("#newTab").addEventListener("click", () => createTab());
 $("#fullscreenBtn").addEventListener("click", async () => {
   const tab = activeTab();
