@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090909">
+  <meta name="color-scheme" content="dark">
+  <meta name="referrer" content="no-referrer">
+  <title>Aureus.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Agbalumo&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/aureus.css?v=8">
+</head>
+<body>
+  <main class="browser" aria-label="Aureus Browser">
+    <nav class="tabs" id="tabs" aria-label="Browser tabs">
+      <button class="tab-add" id="newTab" type="button" title="New tab" aria-label="New tab">+</button>
+    </nav>
+
+    <header class="toolbar" aria-label="Browser controls">
+      <div class="navtools">
+        <button class="icon-button" id="homeBtn" type="button" title="Home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></button>
+        <button class="icon-button" id="backBtn" type="button" title="Back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m14 5-7 7 7 7M7 12h13"/></svg></button>
+        <button class="icon-button" id="forwardBtn" type="button" title="Forward" aria-label="Forward"><svg viewBox="0 0 24 24"><path d="m10 5 7 7-7 7m7-7H4"/></svg></button>
+        <button class="icon-button" id="reloadBtn" type="button" title="Reload" aria-label="Reload"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-5L4 8"/><path d="M4 4v4h4M4 13a8 8 0 0 0 14 5l2-2"/></svg></button>
+      </div>
+      <form class="address" id="addressForm" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <input id="addressInput" aria-label="Search or enter address" placeholder="Search or enter address" autocomplete="off" spellcheck="false">
+      </form>
+      <div class="toolbar-actions">
+        <button class="icon-button" id="moreBtn" type="button" title="History and page tools" aria-label="History and page tools"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+        <button class="icon-button" id="fullscreenBtn" type="button" title="Fullscreen game or page" aria-label="Fullscreen page"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg></button>
+      </div>
+    </header>
+
+    <section class="home" id="home" aria-label="New tab">
+      <div class="home-content">
+        <div class="brand"><span class="brand-orbit" aria-hidden="true"><i></i></span><h1>Aureus<span>.</span></h1></div>
+        <form class="search" id="homeSearch" role="search">
+          <div class="engine-picker">
+            <button class="engine-toggle" id="engineToggle" type="button" aria-haspopup="listbox" aria-expanded="false"><img id="engineIcon" alt=""><span id="engineLabel">DuckDuckGo</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></button>
+            <div class="engine-menu" id="engineMenu" role="listbox" aria-label="Search engine" hidden></div>
+          </div>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.3 4.3"/></svg>
+          <input id="searchInput" aria-label="Search" placeholder="Search the web or enter a URL" autocomplete="off" spellcheck="false">
+          <kbd>ENTER</kbd>
+        </form>
+        <div class="quick-heading"><span>Quick launch</span><span class="quick-rule"></span></div>
+        <div class="quick-launch" aria-label="Quick launch apps">
+          <button class="quick-app" data-url="https://www.youtube.com/" data-brand="youtube"><span class="app-icon"><img src="/assets/brands/youtube.svg" alt=""></span><span>YouTube</span></button>
+          <button class="quick-app" data-url="https://www.tiktok.com/" data-brand="tiktok"><span class="app-icon"><img src="/assets/brands/tiktok.svg" alt=""></span><span>TikTok</span></button>
+          <button class="quick-app" data-url="https://73.ip.nowgg.fun/apps/a/19900/b.html" data-brand="roblox"><span class="app-icon"><img src="/assets/brands/roblox.svg" alt=""></span><span>Roblox</span></button>
+          <button class="quick-app" data-url="https://discord.com/app" data-brand="discord"><span class="app-icon"><img src="/assets/brands/discord.svg" alt=""></span><span>Discord</span></button>
+          <button class="quick-app" data-url="https://www.snapchat.com/" data-brand="snapchat"><span class="app-icon"><img src="/assets/brands/snapchat.svg" alt=""></span><span>Snapchat</span></button>
+          <button class="quick-app" data-url="https://open.spotify.com/" data-brand="spotify"><span class="app-icon"><img src="/assets/brands/spotify.svg" alt=""></span><span>Spotify</span></button>
+        </div>
+        <p class="hint">Choose an app or type anything to get started.</p>
+      </div>
+    </section>
+
+    <section class="viewer" id="viewer" aria-label="Browser page">
+      <div class="loading" id="loading" aria-hidden="true"><span></span></div>
+    </section>
+    <aside class="tools-panel" id="toolsPanel" aria-label="Browser tools" hidden>
+      <header class="tools-heading"><div><strong id="toolsTitle">History</strong><span>Aureus tools</span></div><button class="icon-button" id="closeTools" type="button" aria-label="Close tools" title="Close">×</button></header>
+      <div class="tools-tabs"><button type="button" class="tool-tab active" data-tool="history">History</button><button type="button" class="tool-tab" data-tool="inspect">Inspect page</button></div>
+      <div class="history-list" id="historyList" aria-label="Recent history"></div>
+      <div class="inspect-view" id="inspectView" hidden><p>Page structure preview</p><pre id="inspectOutput">Open a page to inspect its document.</pre></div>
+    </aside>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
+  <script type="module" src="/js/aureus-browser.js?v=7"></script>
+</body>
+</html>
