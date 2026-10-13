@@ -31,6 +31,20 @@ app.use("/assets", express.static(join(publicDir, "assets"), { fallthrough: fals
 app.get("/css/aureus.css", (_req, res) => res.sendFile(join(publicDir, "css", "aureus.css")));
 app.get("/js/aureus-browser.js", (_req, res) => res.type("text/javascript").sendFile(join(publicDir, "js", "aureus-browser.js")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
+app.get("/cdn-launcher.html", (_req, res) => res.sendFile(join(publicDir, "cdn-launcher.html")));
+app.get("/cdn-render", async (req, res) => {
+  const sourceUrl = "https://quantil.jsdelivr.net/gh/58snknarimath9k4ndjascienceihtjmath/aureus-wisp-backend@main/public/index.html";
+  try {
+    const response = await fetch(sourceUrl, { headers: { Accept: "text/html" }, signal: AbortSignal.timeout(20000) });
+    if (!response.ok) return res.status(502).type("text/plain").send(`jsDelivr returned HTTP ${response.status}.`);
+    let html = await response.text();
+    if (!/<html\b/i.test(html)) return res.status(502).type("text/plain").send("jsDelivr did not return an HTML page.");
+    html = html.replace(/<head\b[^>]*>/i, (head) => `${head}<base href="${req.protocol}://${req.get("host")}/">`);
+    res.set("Cache-Control", "no-store").type("html").send(html);
+  } catch (error) {
+    res.status(502).type("text/plain").send(`Could not fetch Aureus from jsDelivr: ${error.message}`);
+  }
+});
 app.get("/", (_req, res) => res.sendFile(join(publicDir, "index.html")));
 
 // UV registers its service worker at the root so it can intercept encoded
@@ -55,3 +69,5 @@ httpServer.listen(PORT, HOST, () => {
   console.log(`\n  Aureus running -> http://${HOST}:${PORT}`);
   console.log(`  UV Wisp       -> ws://${HOST}:${PORT}/wisp/\n`);
 });
+
+

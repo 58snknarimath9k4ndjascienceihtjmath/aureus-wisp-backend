@@ -12,7 +12,6 @@ let restoringTabs = true;
 const HISTORY_KEY = "aureus.history.v1";
 const ENGINE_KEY = "aureus.search-engine.v1";
 const SESSION_KEY = "aureus.session.v1";
-const AUREUS_CDN_URL = "https://quantil.jsdelivr.net/gh/58snknarimath9k4ndjascienceihtjmath/aureus-wisp-backend@main/public/index.html";
 const engines = [
   { id: "duckduckgo", name: "DuckDuckGo", template: "https://duckduckgo.com/?q={query}", domain: "duckduckgo.com" },
   { id: "google", name: "Google", template: "https://www.google.com/search?q={query}", domain: "google.com" },
@@ -267,54 +266,6 @@ const proxyReady = (async () => {
   await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
 })();
 
-function makeBlankPlayer(popup) {
-  const doc = popup.document;
-  doc.open();
-  doc.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Loading page…</title><style>*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#050506;color:#f5f5f7;font:14px/1.4 system-ui,sans-serif}#cdnFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#050506}#status{position:fixed;z-index:2;inset:0;display:grid;place-items:center;padding:24px;background:#050506;text-align:center}#status[hidden]{display:none}#status span{max-width:360px;padding:15px 18px;border:1px solid #3a3a40;border-radius:12px;background:#151518;color:#dedee4}#controls{position:fixed;z-index:3;top:12px;right:12px;display:flex;gap:7px;opacity:.28;transition:opacity .16s}#controls:hover,#controls:focus-within{opacity:1}#controls button{height:34px;padding:0 12px;border:1px solid #49494f;border-radius:8px;background:#17171be8;color:#f5f5f7;font:inherit;cursor:pointer;backdrop-filter:blur(10px)}#controls button:hover{background:#303036}</style></head><body><iframe id="cdnFrame" title="Fullscreen page" allow="fullscreen; autoplay; clipboard-read; clipboard-write; encrypted-media; gamepad; pointer-lock" allowfullscreen referrerpolicy="no-referrer"></iframe><div id="status"><span>Connecting through the Aureus proxy…</span></div><div id="controls"><button id="full" type="button">Fullscreen</button><button id="close" type="button">Close</button></div></body></html>`);
-  doc.close();
-  popup.opener = null;
-  const frame = doc.querySelector("#cdnFrame");
-  const status = doc.querySelector("#status");
-  doc.querySelector("#full").addEventListener("click", () => {
-    frame.requestFullscreen().catch(() => { status.hidden = false; status.querySelector("span").textContent = "Fullscreen was blocked by the browser. Use its fullscreen control instead."; });
-  });
-  doc.querySelector("#close").addEventListener("click", () => popup.close());
-  return { frame, status };
-}
-
-function withAureusAssetBase(source) {
-  const base = `<base href="${location.origin}/">`;
-  const withoutBase = source.replace(/<base\b[^>]*>/ig, "");
-  if (/<head\b[^>]*>/i.test(withoutBase)) return withoutBase.replace(/<head\b[^>]*>/i, (head) => `${head}${base}`);
-  if (/<html\b[^>]*>/i.test(withoutBase)) return withoutBase.replace(/<html\b[^>]*>/i, (html) => `${html}<head>${base}</head>`);
-  return `<!doctype html><html><head>${base}</head><body>${withoutBase}</body></html>`;
-}
-
-async function openAureusCdnSite() {
-  const popup = window.open("about:blank", "_blank");
-  if (!popup) { showNotice("Allow pop-ups for Aureus to open the fullscreen player."); return; }
-  const player = makeBlankPlayer(popup);
-  player.status.querySelector("span").textContent = "Loading Aureus from jsDelivr…";
-  try {
-    const response = await fetch(AUREUS_CDN_URL, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store" });
-    if (!response.ok) throw new Error(`jsDelivr returned HTTP ${response.status}.`);
-    const source = await response.text();
-    if (!/<(?:!doctype\s+html|html|head|body)\b/i.test(source)) throw new Error("The CDN response did not contain an HTML page.");
-    if (popup.closed) return;
-
-    const parsed = new DOMParser().parseFromString(source, "text/html");
-    if (parsed.title) popup.document.title = parsed.title.slice(0, 100);
-    player.status.querySelector("span").textContent = "Aureus is ready.";
-    player.frame.addEventListener("load", () => { player.status.hidden = true; }, { once: true });
-    player.frame.srcdoc = withAureusAssetBase(source);
-  } catch (error) {
-    if (!popup.closed) {
-      player.status.hidden = false;
-      player.status.querySelector("span").textContent = `Could not load Aureus from jsDelivr: ${error.message}`;
-    }
-  }
-}
-
 async function navigate(raw, { recordHistory = true, preserveTitle = false } = {}) {
   const url = normalizeAddress(raw);
   if (!url) return;
@@ -436,8 +387,6 @@ $("#reloadBtn").addEventListener("click", () => {
   const tab = activeTab();
   if (tab?.url && tab.iframe) { tab.loading = true; loading.classList.add("active"); tab.iframe.src = tab.iframe.src; }
 });
-$("#renderHtmlBtn").addEventListener("click", openAureusCdnSite);
-$("#cdnHtmlLaunch").addEventListener("click", openAureusCdnSite);
 $("#newTab").addEventListener("click", () => createTab());
 $("#fullscreenBtn").addEventListener("click", async () => {
   const tab = activeTab();
@@ -537,3 +486,4 @@ proxyReady.catch((error) => {
   console.error("Ultraviolet initialization failed:", error);
   showNotice(`Proxy setup needs attention: ${error.message}`);
 });
+
