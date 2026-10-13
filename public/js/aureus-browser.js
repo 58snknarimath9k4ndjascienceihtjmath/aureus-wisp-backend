@@ -1,4 +1,4 @@
-import { BareMuxConnection } from "/baremux/index.mjs";
+import { BareMuxConnection } from "../baremux/index.mjs";
 
 const $ = (selector) => document.querySelector(selector);
 const tabsBar = $("#tabs");
@@ -12,6 +12,7 @@ let restoringTabs = true;
 const HISTORY_KEY = "aureus.history.v1";
 const ENGINE_KEY = "aureus.search-engine.v1";
 const SESSION_KEY = "aureus.session.v1";
+const PUBLIC_ROOT = new URL("../", import.meta.url).pathname;
 const engines = [
   { id: "duckduckgo", name: "DuckDuckGo", template: "https://duckduckgo.com/?q={query}", domain: "duckduckgo.com" },
   { id: "google", name: "Google", template: "https://www.google.com/search?q={query}", domain: "google.com" },
@@ -238,14 +239,16 @@ const proxyReady = (async () => {
   if (!window.__uv$config) throw new Error("Ultraviolet files did not load. Run the build command from the Aureus folder.");
 
   // Replace any previous root-scoped interception worker so UV owns proxy requests.
+  const workerScope = `${PUBLIC_ROOT}uv/`;
+  const workerUrl = `${PUBLIC_ROOT}uv/uv.sw.js`;
   for (const registration of await navigator.serviceWorker.getRegistrations()) {
     const scope = new URL(registration.scope);
-    const isRootScope = scope.origin === location.origin && scope.pathname === "/";
-    if (isRootScope && !registration.active?.scriptURL.includes("/uv.sw.js")) {
+    const isAppOrigin = scope.origin === location.origin;
+    if (isAppOrigin && (scope.pathname !== workerScope || !registration.active?.scriptURL.endsWith(workerUrl))) {
       await registration.unregister();
     }
   }
-  await navigator.serviceWorker.register("/uv.sw.js", { scope: "/", updateViaCache: "none" });
+  await navigator.serviceWorker.register(workerUrl, { scope: workerScope, updateViaCache: "none" });
   await navigator.serviceWorker.ready;
   if (!navigator.serviceWorker.controller || !navigator.serviceWorker.controller.scriptURL.includes("/uv.sw.js")) {
     await new Promise((resolve) => {
@@ -259,11 +262,11 @@ const proxyReady = (async () => {
     });
   }
 
-  const connection = new BareMuxConnection("/baremux/worker.js");
+  const connection = new BareMuxConnection(`${PUBLIC_ROOT}baremux/worker.js`);
   // The WISP backend is deployed separately from this frontend.
   // Railway provides HTTPS, so its WebSocket endpoint uses WSS.
   const wispUrl = "wss://aureus-wisp-backend-production.up.railway.app/wisp/";
-  await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
+  await connection.setTransport(`${PUBLIC_ROOT}epoxy/index.mjs`, [{ wisp: wispUrl }]);
 })();
 
 async function navigate(raw, { recordHistory = true, preserveTitle = false } = {}) {
