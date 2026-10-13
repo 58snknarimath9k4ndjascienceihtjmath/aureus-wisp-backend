@@ -39,7 +39,9 @@ app.get("/cdn-render", async (req, res) => {
     if (!response.ok) return res.status(502).type("text/plain").send(`jsDelivr returned HTTP ${response.status}.`);
     let html = await response.text();
     if (!/<html\b/i.test(html)) return res.status(502).type("text/plain").send("jsDelivr did not return an HTML page.");
-    html = html.replace(/<head\b[^>]*>/i, (head) => `${head}<base href="${req.protocol}://${req.get("host")}/">`);
+    const forwardedProtocol = req.get("x-forwarded-proto")?.split(",")[0]?.trim();
+    const origin = `${forwardedProtocol || req.protocol}://${req.get("host")}`;
+    html = html.replace(/<head\b[^>]*>/i, (head) => `${head}<base href="${origin}/">`);
     res.set("Cache-Control", "no-store").type("html").send(html);
   } catch (error) {
     res.status(502).type("text/plain").send(`Could not fetch Aureus from jsDelivr: ${error.message}`);
